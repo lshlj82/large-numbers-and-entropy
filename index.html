@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Large Systems and Entropy, Interactively</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#EDF1F4; --surface:#F8FAFC; --ink:#15202B; --muted:#56636F; --rule:#C5CFD7; --band:#E2E8ED;
+  --a:#C4402B; --b:#2B67D1; --acc:#1B7F6B; --gold:#C8901A; --vio:#6A3FB0; --res:#8B98A4;
+  --serif:"Newsreader",Georgia,"Times New Roman",serif;
+  --sans:"Instrument Sans",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#0E151C; --surface:#141D26; --ink:#E3E9EE; --muted:#97A4B0; --rule:#2B3743; --band:#1B2631;
+    --a:#FF7A66; --b:#6E9FF2; --acc:#4FD1B5; --gold:#F0C05C; --vio:#B392F0; --res:#5B6976;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0E151C; --surface:#141D26; --ink:#E3E9EE; --muted:#97A4B0; --rule:#2B3743; --band:#1B2631;
+  --a:#FF7A66; --b:#6E9FF2; --acc:#4FD1B5; --gold:#F0C05C; --vio:#B392F0; --res:#5B6976;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*::before,*::after{box-sizing:inherit}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:1.1rem;line-height:1.62;-webkit-font-smoothing:antialiased}
+img,canvas{max-width:100%}
+a{color:var(--acc)}
+:focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:2px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 clamp(1rem,4vw,2.5rem)}
+.prose{max-width:40rem}
+
+header.hero{padding:clamp(2.5rem,7vw,5rem) 0 1.5rem}
+.credit{font-family:var(--sans);font-size:.9rem;color:var(--muted);margin:0 0 1.25rem}
+h1{font-weight:500;font-size:clamp(2.5rem,7.5vw,5.25rem);line-height:.98;letter-spacing:-.025em;margin:0 0 1.25rem;max-width:12ch}
+.lede{font-size:clamp(1.15rem,2.2vw,1.35rem);max-width:37rem;margin:0}
+
+section{padding:clamp(2.5rem,6vw,4rem) 0;border-top:1px solid var(--rule)}
+section:first-of-type{border-top:0;padding-top:1rem}
+h2{font-weight:500;font-size:clamp(1.7rem,3.5vw,2.35rem);line-height:1.1;letter-spacing:-.015em;margin:0 0 1rem}
+h3{font-family:var(--sans);font-weight:600;font-size:1rem;margin:1.75rem 0 .5rem}
+p{margin:0 0 1rem}
+.note{font-size:.95rem;color:var(--muted)}
+
+.eq{display:block;text-align:center;margin:1.25rem 0;overflow-x:auto;overflow-y:hidden;padding:.25rem 0}
+.eq.multi{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;column-gap:2.2em;row-gap:.65rem}
+.boxed.multi{display:inline-flex;flex-wrap:wrap;justify-content:center;align-items:center;column-gap:2em;row-gap:.6rem;max-width:100%}
+.eqp{max-width:100%}
+.multi.chain{column-gap:.35em}
+mjx-container{color:inherit}
+mjx-container[display="true"]{margin:0 !important}
+.stats mjx-container,.legend mjx-container,.cap mjx-container,.ctl small mjx-container{font-size:105%}
+.ctl output mjx-container{font-size:95%}
+.boxed{display:inline-block;border:1.5px solid var(--acc);padding:.5rem 1rem;border-radius:3px}
+
+.fig{display:grid;grid-template-columns:minmax(0,1fr) 17.5rem;gap:1.5rem;align-items:start;margin-top:1.5rem}
+@media (max-width:820px){.fig{grid-template-columns:1fr}}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:1rem}
+.canvas-holder{background:var(--surface);border:1px solid var(--rule);border-radius:6px;overflow:hidden}
+canvas{display:block;width:100%}
+
+.ctl{font-family:var(--sans);font-size:.9rem;margin-bottom:1.1rem}
+.ctl:last-child{margin-bottom:0}
+.ctl label{display:flex;justify-content:space-between;align-items:baseline;gap:.75rem;font-weight:500;margin-bottom:.3rem}
+.ctl .lt{flex:1 1 auto}
+.ctl .lbl{display:block;font-weight:500;margin-bottom:.4rem}
+.ctl output{flex:0 0 auto;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--muted);font-weight:400}
+.ctl small{display:block;color:var(--muted);line-height:1.4;margin-top:.25rem}
+input[type=range]{width:100%;accent-color:var(--acc);margin:0}
+select{font-family:var(--sans);font-size:.9rem;color:var(--ink);background:var(--surface);border:1px solid var(--rule);border-radius:4px;padding:.4rem .5rem;width:100%}
+.btns{display:flex;flex-wrap:wrap;gap:.5rem}
+button{font-family:var(--sans);font-size:.88rem;font-weight:500;color:var(--ink);background:transparent;border:1px solid var(--rule);border-radius:4px;padding:.45rem .8rem;cursor:pointer}
+button:hover{border-color:var(--ink)}
+button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+button.primary{background:var(--acc);border-color:var(--acc);color:#fff}
+
+.stats{font-family:var(--sans);font-size:.9rem;display:grid;grid-template-columns:auto auto;gap:.35rem 1rem;margin:0}
+.stats dt{color:var(--muted)}
+.stats dd{margin:0;text-align:right;font-variant-numeric:tabular-nums;font-weight:500;white-space:nowrap}
+.stats .sep{grid-column:1/-1;border-top:1px solid var(--rule);margin:.3rem 0}
+.legend{font-family:var(--sans);font-size:.85rem;color:var(--muted);display:flex;flex-wrap:wrap;gap:1rem;margin:.6rem 0 0;align-items:center}
+.swatch{display:inline-block;width:.75rem;height:.75rem;border-radius:2px;vertical-align:-1px;margin-right:.35rem}
+.swatch.line{height:3px;width:1.1rem;vertical-align:3px;border-radius:0}
+.swatch.dash{height:0;width:1.1rem;vertical-align:3px;border-radius:0;border-top:3px dashed}
+.swatch.dot{border-radius:50%}
+.cap{font-family:var(--sans);font-size:.85rem;color:var(--muted);margin:.5rem .25rem 0}
+.verdict{font-family:var(--sans);font-size:1rem;font-weight:500;margin:.85rem 0 0;max-width:40rem}
+.big{font-size:clamp(2.2rem,5.5vw,3.2rem);line-height:1;font-weight:500;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin:.1rem 0 .3rem}
+.tblwrap{overflow-x:auto}
+table.num{border-collapse:collapse;font-family:var(--sans);font-size:.9rem;font-variant-numeric:tabular-nums;margin:1rem 0}
+table.num th,table.num td{padding:.35rem .8rem;border-bottom:1px solid var(--rule);text-align:right}
+table.num th{font-weight:600;color:var(--muted)}
+
+footer{border-top:1px solid var(--rule);padding:2rem 0 3rem;font-family:var(--sans);font-size:.9rem;color:var(--muted)}
+footer p{margin:0 0 .4rem}
+</style>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['\\(','\\)']], displayMath: [['\\[','\\]']] },
+  svg: { fontCache: 'global' },
+  options: { enableMenu: false }
+};
+</script>
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-svg.js"></script>
+</head>
+<body>
+<div class="wrap">
+
+<header class="hero">
+  <p class="credit">An interactive demo created by Claude Opus 5.5, based on the lecture notes by Sang Hoon Lee (Statistical Physics 1, Chapter 2, The Second Law, Sections 2.4 to 2.6)</p>
+  <h1>Large Systems and Entropy</h1>
+  <p class="lede">With a few hundred particles, some macrostates are much more probable than others. With 10<sup>20</sup> or more, the most probable macrostate is the only one you will ever see. Counting them leads to entropy and the second law.</p>
+</header>
+
+<!-- ============ LARGE NUMBERS ============ -->
+<section id="numbers" aria-labelledby="h-num">
+  <h2 id="h-num">Very large numbers</h2>
+  <div class="prose">
+    <p>For two Einstein solids with a few hundred oscillators and energy units, the multiplicity is peaked, but perhaps 20% of the macrostates are still fairly probable. With a few thousand, the peak is already too sharp to draw, and real systems have more than \(10^{20}\) particles. To quantify this we need the mathematics of very large numbers.</p>
+    <p>There are <strong>small numbers</strong> like 23, <strong>large numbers</strong> like \(10^{23}\) (the order of Avogadro’s number), and <strong>very large numbers</strong> like \(10^{10^{23}}\), each the exponential of the one before. Adding a small number to a large one doesn’t change it, \(10^{23} + 23 \approx 10^{23}\) (unless you later subtract the same large number off), and multiplying a very large number by a large one doesn’t change it either:</p>
+    <div class="eq">\[ 10^{10^{23}} \times 10^{23} = 10^{10^{23} + 23} \approx 10^{10^{23}} \]</div>
+    <p>The common trick is to take the logarithm, which turns a very large number into an ordinary large one, and exponentiate at the end. With \(e^x = y \Leftrightarrow x = \ln y\), \(\ln(ab) = \ln a + \ln b\), and for \(|x| \ll 1\), \(\ln(1+x) \approx x\) (for example \(\ln 1.1 = 0.0953\ldots\)).</p>
+  </div>
+
+  <h3>Stirling’s approximation</h3>
+  <div class="prose">
+    <p>Multiplicities involve factorials, and \(N! = N(N-1)\cdots 2\cdot 1\) gets too large fast. Replacing every factor by \(N\) gives \(N^N\), a gross overestimate; on average each factor is effectively smaller by a factor of \(e\), so \(N! \approx (N/e)^N = N^Ne^{-N}\). A further correction gives</p>
+    <div class="eq multi"><span class="eqp">\( \displaystyle N! \approx N^N e^{-N}\sqrt{2\pi N}, \)</span><span class="eqp">\( \displaystyle \ln N! \approx N\ln N - N \)</span></div>
+    <p>for \(N \gg 1\); if all we care about is the logarithm, the second is usually good enough.</p>
+  </div>
+  <div class="fig">
+    <div>
+      <div class="canvas-holder"><canvas id="stCanvas" aria-label="Relative error of Stirling's approximations versus N"></canvas></div>
+      <div class="legend">
+        <span><span class="swatch line" style="background:var(--acc)"></span>Error of \(N^Ne^{-N}\sqrt{2\pi N}\) for \(N!\)</span>
+        <span><span class="swatch line" style="background:var(--a)"></span>Error of \(N\ln N - N\) for \(\ln N!\)</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ctl">
+        <label for="stN"><span class="lt">\(N\)</span> <output id="stNOut"></output></label>
+        <input type="range" id="stN" min="0" max="6" step="0.01" value="1">
+      </div>
+      <dl class="stats">
+        <dt>\(N!\)</dt><dd id="stF">–</dd>
+        <dt>\(N^Ne^{-N}\sqrt{2\pi N}\)</dt><dd id="stS">–</dd>
+        <dt>Error</dt><dd id="stE1">–</dd>
+        <dt class="sep"></dt>
+        <dt>\(\ln N!\)</dt><dd id="stL">–</dd>
+        <dt>\(N\ln N - N\)</dt><dd id="stL2">–</dd>
+        <dt>Error</dt><dd id="stE2">–</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ============ SHARP PEAK ============ -->
+<section id="peak" aria-labelledby="h-peak">
+  <h2 id="h-peak">How sharp is the peak?</h2>
+  <div class="prose">
+    <p>Apply Stirling to the Einstein solid, \(\Omega(N,q) \approx (q+N)!/q!\,N!\) for large \(N\). In the high-temperature limit \(q \gg N\), using \(\ln(q+N) \approx \ln q + N/q\),</p>
+    <div class="eq multi"><span class="eqp">\( \displaystyle \ln\Omega \approx N\ln\frac{q}{N} + N, \)</span><span class="eqp">\( \displaystyle \Omega \approx \left(\frac{eq}{N}\right)^N \quad (q \gg N) \)</span></div>
+    <p>(and \(\Omega \approx (eN/q)^q\) for \(q \ll N\), since \(\ln\Omega\) is symmetric in \(q\) and \(N\)). Now take two such solids with \(N\) oscillators each, sharing \(q = q_A + q_B\): \(\Omega = (e/N)^{2N}(q_Aq_B)^N\), peaked by symmetry at \(q_A = q/2\). Write \(q_A = q/2 + x\) and \(q_B = q/2 - x\); with \(\ln(1 - \epsilon) \approx -\epsilon\),</p>
+    <div class="eq"><span class="boxed">\( \displaystyle \Omega \approx \Omega_{\max}\, e^{-N(2x/q)^2} \)</span></div>
+    <p>a Gaussian, which falls to \(1/e\) of its maximum at \(|x| = q/2\sqrt{N}\). (This is also an instance of the central limit theorem, and of the de Moivre–Laplace theorem, by which the binomial distribution approaches a Gaussian.) Slide \(N\) up to see the peak against the full range \(0 \le q_A \le q\):</p>
+  </div>
+  <div class="fig">
+    <div>
+      <div class="canvas-holder"><canvas id="pkCanvas" aria-label="Multiplicity of two Einstein solids versus the share of energy in solid A"></canvas></div>
+      <div class="legend">
+        <span><span class="swatch line" style="background:var(--vio)"></span>Exact multiplicity (up to \(N = 10^6\))</span>
+        <span><span class="swatch dash" style="border-color:var(--acc)"></span>\(\Omega_{\max}\,e^{-N(2x/q)^2}\)</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ctl">
+        <label for="pkN"><span class="lt">Oscillators in each solid \(N\)</span> <output id="pkNOut"></output></label>
+        <input type="range" id="pkN" min="0" max="24" step="0.1" value="2">
+        <small>Here \(q = 100N\), well into the high-temperature limit.</small>
+      </div>
+      <dl class="stats">
+        <dt>Peak width, \(q/\sqrt{N}\)</dt><dd id="pkW">–</dd>
+        <dt>As a fraction of the axis</dt><dd id="pkF">–</dd>
+        <dt>Axis length for a 1 cm wide peak</dt><dd id="pkL">–</dd>
+        <dt class="sep"></dt>
+      </dl>
+      <p class="cap" id="pkEarth" style="margin:.75rem 0 0"></p>
+      <p class="cap" style="margin:.5rem 0 0">Ten widths out, the multiplicity is down by \(e^{-100} \approx 10^{-44}\).</p>
+    </div>
+  </div>
+  <div class="prose" style="margin-top:1.5rem">
+    <p>For \(N = 10^{20}\), the width is one part in ten billion of the axis: drawn 1 cm wide, the axis would be \(10^5\) km long, more than twice around the Earth. Ten widths away from the peak, the multiplicity is down by \(e^{-100} \approx 10^{-44}\). Random fluctuations away from the most likely macrostate are utterly unmeasurable: the <strong>thermodynamic limit</strong>. In a well-known quip, it all works because Avogadro’s number is closer to infinity than to 10.</p>
+  </div>
+</section>
+
+<!-- ============ IDEAL GAS ============ -->
+<section id="gas" aria-labelledby="h-gas">
+  <h2 id="h-gas">The ideal gas</h2>
+  <div class="prose">
+    <p>How many microstates does a monatomic ideal gas have with energy \(U\) in volume \(V\)? For one atom, the multiplicity is proportional to the volume of ordinary space (doubling the container doubles it) and to the area of the surface \(p_x^2 + p_y^2 + p_z^2 = 2mU\) in momentum space, a sphere of radius \(\sqrt{2mU}\). To count states we need a bit of quantum mechanics: by the uncertainty principle \(\Delta x\,\Delta p_x \approx h\), so a one-dimensional box of length \(L\) with momentum range \(L_p\) has \(LL_p/h\) distinct states, and in three dimensions \(\Omega_1 = VV_p/h^3\).</p>
+    <p>For two atoms, the constraint \(p_{1x}^2 + \cdots + p_{2z}^2 = 2mU\) is the surface of a sphere in six dimensions, and since the atoms are indistinguishable, swapping them gives the same state: divide by \(2!\). For \(N\) atoms, using the area of a \(d\)-dimensional sphere, \(2\pi^{d/2}r^{d-1}/(d/2 - 1)!\), with \(d = 3N\):</p>
+    <div class="eq multi"><span class="eqp">\( \displaystyle \Omega_N \approx \frac{1}{N!}\,\frac{V^N}{h^{3N}}\,\frac{\pi^{3N/2}}{(3N/2)!}\left(\sqrt{2mU}\right)^{3N}, \)</span><span class="eqp">\( \displaystyle \Omega(U,V,N) = f(N)\,V^N U^{3N/2} \)</span></div>
+    <p>The exponent \(3N/2\) is half the number of degrees of freedom, just as \(\Omega \approx (eq/N)^N\) for the Einstein solid with its \(2N\). In general, a system with only quadratic degrees of freedom and enough energy that quantization is unnoticeable has \(\Omega \propto U^{Nf/2}\).</p>
+  </div>
+
+  <h3>Two gases sharing energy and volume</h3>
+  <div class="prose">
+    <p>Two samples of the same gas, each with \(N\) molecules, separated by a movable partition that also passes energy, have \(\Omega_{\text{total}} = [f(N)]^2(V_AV_B)^N(U_AU_B)^{3N/2}\). This is the same form as for two Einstein solids, so the peak is a Gaussian in each direction, with widths \(U_{\text{total}}/\sqrt{3N/2}\) and \(V_{\text{total}}/\sqrt{N}\): very sharp in both \(U_A\) and \(V_A\).</p>
+  </div>
+  <div class="fig">
+    <div>
+      <div class="canvas-holder"><canvas id="uvCanvas" tabindex="0" style="touch-action:none;cursor:grab" aria-label="3D surface of the total multiplicity over the energy and volume of gas A. Drag or use the arrow keys to rotate."></canvas></div>
+      <p class="cap">Height shows \(\Omega_{\text{total}}/\Omega_{\max}\) over every way of dividing the energy and the volume. Drag to rotate, or focus the picture and use the arrow keys.</p>
+    </div>
+    <div class="panel">
+      <div class="ctl">
+        <label for="uvN"><span class="lt">Molecules in each gas \(N\)</span> <output id="uvNOut"></output></label>
+        <input type="range" id="uvN" min="0" max="4" step="0.05" value="1">
+      </div>
+      <dl class="stats">
+        <dt>Width in \(U_A\), as a fraction</dt><dd id="uvU">–</dd>
+        <dt>Width in \(V_A\), as a fraction</dt><dd id="uvV">–</dd>
+      </dl>
+      <p class="cap" style="margin:.75rem 0 0">The equilibrium is \(U_A = U_B\) and \(V_A = V_B\); in general the energy per molecule and the density end up equal.</p>
+    </div>
+  </div>
+
+  <h3>Could all the gas end up on one side?</h3>
+  <div class="prose">
+    <p>If molecules can move between the halves too, a sharp peak fixes the density, \(N_A/V_A = N_B/V_B\). The chance of finding every molecule in the left half is the multiplicity with \(V \to V/2\), \(\Omega/2^N\), over essentially \(\Omega\): a probability of \(1/2^N\). Below, molecules fly freely around a box; the program counts how often they are all on the left.</p>
+  </div>
+  <div class="fig">
+    <div>
+      <div class="canvas-holder"><canvas id="boxCanvas" aria-label="Molecules moving freely in a box, with the left half marked"></canvas></div>
+      <div class="canvas-holder" style="margin-top:.75rem"><canvas id="leftHist" aria-label="How often each number of molecules is found on the left, compared with the binomial distribution"></canvas></div>
+      <div class="legend">
+        <span><span class="swatch" style="background:var(--b)"></span>How often each number was on the left</span>
+        <span><span class="swatch line" style="background:var(--vio)"></span>\(\binom{N}{N_{\text{left}}}/2^N\)</span>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="ctl">
+        <label for="bxN"><span class="lt">Molecules \(N\)</span> <output id="bxNOut"></output></label>
+        <input type="range" id="bxN" min="2" max="200" step="1" value="4">
+      </div>
+      <div class="ctl btns"><button type="button" id="bxPlay">Pause</button><button type="button" id="bxReset">Reset counts</button></div>
+      <dl class="stats">
+        <dt>On the left now</dt><dd id="bxL">–</dd>
+        <dt>Fraction of the time all on the left</dt><dd id="bxAll">–</dd>
+        <dt>Predicted, \(1/2^N\)</dt><dd id="bxP">–</dd>
+      </dl>
+      <p class="verdict" id="bxV" style="font-size:.9rem"></p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ ENTROPY ============ -->
+<section id="entropy" aria-labelledby="h-ent">
+  <h2 id="h-ent">Entropy</h2>
+  <div class="prose">
+    <p>For all these systems, particles and energy tend to rearrange themselves until the multiplicity is at, or very near, its maximum. Any large system in equilibrium will be found in the macrostate with the greatest multiplicity, aside from fluctuations normally too small to measure. Multiplicity tends to increase: a more general statement of the <strong>second law of thermodynamics</strong>. Since multiplicities are very large numbers, it is convenient to work with their logarithm, and for historical reasons to multiply by Boltzmann’s constant:</p>
+    <div class="eq"><span class="boxed">\( \displaystyle S \equiv k_{\mathrm{B}}\ln\Omega \)</span></div>
+    <p>the <strong>entropy</strong>, an ordinary large number with units of energy per temperature (J/K). For a large Einstein solid with \(q \gg N\), \(S = Nk_{\mathrm{B}}[\ln(q/N) + 1]\); with \(N = 10^{22}\) and \(q = 10^{24}\), \(S \approx 0.77\ \mathrm{J/K}\). More particles, more energy, more room, breaking molecules apart, or mixing substances all increase the number of possible arrangements, and so the entropy: intuitively, a measure of molecular-level disorder (though crushed ice has much less entropy than the same amount of water). Since \(\ln(ab) = \ln a + \ln b\), the entropy of a composite system is the sum of its parts’, \(S_{\text{total}} = S_A + S_B\), an extensive quantity. And because the logarithm increases monotonically, <strong>entropy tends to increase</strong>.</p>
+    <p class="note">Could a tiny “demon” that lets fast molecules through a trapdoor one way and slow ones the other spontaneously decrease entropy? Maxwell’s demon has to be operated, which takes energy, and the overall entropy still increases.</p>
+  </div>
+
+  <h3>The entropy of an ideal gas</h3>
+  <div class="prose">
+    <p>Taking the logarithm of \(\Omega_N\) with Stirling’s approximation gives the <strong>Sackur–Tetrode equation</strong>:</p>
+    <div class="eq"><span class="boxed">\( \displaystyle S = Nk_{\mathrm{B}}\left[\ln\!\left(\frac{V}{N}\left(\frac{4\pi mU}{3Nh^2}\right)^{3/2}\right) + \frac52\right] \)</span></div>
+  </div>
+  <div class="fig">
+    <div>
+      <div class="canvas-holder"><canvas id="stCanvas2" aria-label="Molar entropy of noble gases at the chosen conditions"></canvas></div>
+    </div>
+    <div class="panel">
+      <div class="ctl">
+        <label for="sgT"><span class="lt">Temperature</span> <output id="sgTOut"></output></label>
+        <input type="range" id="sgT" min="50" max="1000" step="1" value="300">
+      </div>
+      <div class="ctl">
+        <label for="sgP"><span class="lt">Pressure</span> <output id="sgPOut"></output></label>
+        <input type="range" id="sgP" min="-2" max="2" step="0.01" value="0">
+      </div>
+      <dl class="stats">
+        <dt>1 mol of He: \(V = nRT/P\)</dt><dd id="sgV">–</dd>
+        <dt>\(U = \tfrac32 nRT\)</dt><dd id="sgU">–</dd>
+        <dt>\(S\)</dt><dd id="sgS">–</dd>
+      </dl>
+      <p class="cap" style="margin:.75rem 0 0">At room temperature and atmospheric pressure, a mole of helium has \(S \approx 126\) J/K. Heavier atoms have more momentum states available, hence more entropy.</p>
+    </div>
+  </div>
+
+  <h3>Expansion, mixing, and the Gibbs paradox</h3>
+  <div class="prose">
+    <p>At fixed \(U\) and \(N\), \(S\) depends on volume only through \(Nk_{\mathrm{B}}\ln V\), so expanding from \(V_i\) to \(V_f\) gives \(\Delta S = Nk_{\mathrm{B}}\ln(V_f/V_i)\). In a quasistatic isothermal expansion, heat \(Q = Nk_{\mathrm{B}}T\ln(V_f/V_i)\) flows in, so \(\Delta S = Q/T\), valid for any quasistatic process. In a <strong>free expansion</strong> into vacuum, there is no work and no heat (\(\Delta U = 0\)), yet the same \(\Delta S\) appears: \(\Delta S = Q/T\) fails because free expansion is not quasistatic. Remove a partition between two different gases and each expands into the whole chamber, giving the <strong>entropy of mixing</strong>, \(\Delta S = 2Nk_{\mathrm{B}}\ln 2\). But if both sides hold the same gas, nothing really mixes, and \(\Delta S\) must be zero. The key is distinguishability, carried by the \(1/N!\) in \(\Omega_N\). Try each case:</p>
+  </div>
+  <div class="fig">
+    <div>
+      <div class="canvas-holder"><canvas id="mixCanvas" aria-label="A chamber with a removable partition and two groups of molecules"></canvas></div>
+      <p class="verdict" id="mixV"></p>
+    </div>
+    <div class="panel">
+      <div class="ctl"><span class="lbl">Experiment</span>
+        <div class="btns">
+          <button type="button" data-mix="free" aria-pressed="true">Free expansion</button>
+          <button type="button" data-mix="diff">Two different gases</button>
+          <button type="button" data-mix="same">The same gas</button>
+        </div>
+      </div>
+      <div class="ctl btns"><button type="button" class="primary" id="mixToggle">Remove the partition</button></div>
+      <dl class="stats">
+        <dt>\(\Delta S\) with the \(1/N!\)</dt><dd id="mixS1">0</dd>
+        <dt>Without it (distinguishable molecules)</dt><dd id="mixS2">0</dd>
+      </dl>
+      <p class="cap" style="margin:.75rem 0 0">In units of \(Nk_{\mathrm{B}}\), for \(N\) molecules on each side (or \(N\) in all, for free expansion).</p>
+    </div>
+  </div>
+  <div class="prose" style="margin-top:1.5rem">
+    <p>Without the \(N!\), the entropy would be \(Nk_{\mathrm{B}}[\ln(V(4\pi mU/3Nh^2)^{3/2}) + \tfrac32]\), and simply sliding a partition into a box of one gas would lower it by \(Nk_{\mathrm{B}}\ln 2\), violating the second law. This is the <strong>Gibbs paradox</strong>, resolved by the indistinguishability of molecules. Processes that create no new entropy (of the universe), such as quasistatic ones, are <strong>reversible</strong>; those that create entropy, such as free expansion or any heat flow between objects at different temperatures, are <strong>irreversible</strong>, though a very slow heat flow approaches the reversible limit. More on this in the next chapter.</p>
+  </div>
+</section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>Created by Claude Opus 5.5, based on the lecture notes by Sang Hoon Lee (Statistical Physics 1, Chapter 2, The Second Law, Sections 2.4 to 2.6).</p>
+    <p>Constants: \(k_{\mathrm{B}} = 1.381 \times 10^{-23}\ \mathrm{J/K}\), \(h = 6.626 \times 10^{-34}\ \mathrm{J\,s}\), \(N_A = 6.022 \times 10^{23}\). Equations typeset with MathJax.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+const $ = id => document.getElementById(id);
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+let C = {};
+function readColors(){
+  const cs = getComputedStyle(document.documentElement);
+  ['bg','surface','ink','muted','rule','band','a','b','acc','gold','vio','res'].forEach(k => C[k] = cs.getPropertyValue('--'+k).trim());
+}
+readColors();
+const SANS = '"Instrument Sans", system-ui, sans-serif';
+const SERIF = '"Newsreader", Georgia, serif';
+function fit(cv, LW, LH){
+  const w = cv.parentElement.clientWidth || LW, hgt = w*LH/LW;
+  cv.style.height = hgt + 'px';
+  const d = window.devicePixelRatio || 1;
+  cv.width = Math.round(w*d); cv.height = Math.round(hgt*d);
+  const ctx = cv.getContext('2d'); const s = w*d/LW;
+  ctx.setTransform(s,0,0,s,0,0);
+  return ctx;
+}
+function rich(c, x, y, size, parts, align){
+  c.save(); c.textAlign = 'left';
+  const fontOf = st => st==='i' ? 'italic '+size+'px '+SERIF : st==='isub' ? 'italic '+(size*0.7)+'px '+SERIF : (st==='sub'||st==='sup') ? (size*0.7)+'px '+SERIF : st==='s' ? (size*0.88)+'px '+SANS : size+'px '+SERIF;
+  const widths = parts.map(([t,st]) => { c.font = fontOf(st); return c.measureText(t).width; });
+  const total = widths.reduce((a,b)=>a+b,0);
+  let cx = align==='center' ? x-total/2 : align==='right' ? x-total : x;
+  parts.forEach(([t,st],i) => { c.font = fontOf(st); const dy = (st==='sub'||st==='isub') ? size*0.25 : st==='sup' ? -size*0.38 : 0; c.fillText(t, cx, y+dy); cx += widths[i]; });
+  c.restore(); return total;
+}
+function axes(c, W, H, box, xr, yr, xt, yt, xlab, ylab, xfmt, yfmt){
+  const [L,T,Rr,B] = box;
+  c.clearRect(0,0,W,H); c.fillStyle=C.surface; c.fillRect(0,0,W,H);
+  const X = v => L + (v-xr[0])/(xr[1]-xr[0])*(W-L-Rr), Y = v => H-B - (v-yr[0])/(yr[1]-yr[0])*(H-T-B);
+  c.font='12px '+SANS; c.fillStyle=C.muted; c.textAlign='center';
+  xt.forEach(v => { c.strokeStyle=C.band; c.lineWidth=1; c.beginPath(); c.moveTo(X(v),T); c.lineTo(X(v),H-B); c.stroke(); c.fillText(xfmt ? xfmt(v) : String(v), X(v), H-B+16); });
+  c.textAlign='right'; yt.forEach(v => { c.strokeStyle = v===0 ? C.rule : C.band; c.beginPath(); c.moveTo(L,Y(v)); c.lineTo(W-Rr,Y(v)); c.stroke(); c.fillText(yfmt ? yfmt(v) : String(v), L-6, Y(v)+4); });
+  c.fillStyle=C.muted; if (xlab) rich(c, W-Rr-2, H-8, 14, xlab, 'right');
+  if (ylab){ c.save(); c.globalAlpha=0.85; c.fillStyle=C.surface; c.fillRect(L+2, T-2, 200, 20); c.restore(); c.fillStyle=C.muted; rich(c, L+6, T+12, 14, ylab, 'left'); }
+  c.strokeStyle=C.muted; c.lineWidth=1; c.beginPath(); c.moveTo(L,T); c.lineTo(L,H-B); c.lineTo(W-Rr,H-B); c.stroke();
+  return {X, Y};
+}
+let rs = (Date.now() ^ 0x9e3779b9) >>> 0 || 1;
+const rnd = () => { rs ^= rs << 13; rs >>>= 0; rs ^= rs >>> 17; rs ^= rs << 5; rs >>>= 0; return rs / 4294967296; };
+const pow10 = e => e===0 ? '1' : e===1 ? '10' : '10' + String(e).replace('-','⁻').replace(/\d/g, d => '⁰¹²³⁴⁵⁶⁷⁸⁹'[d]);
+// ln Gamma by Lanczos (g = 7), accurate to ~1e-13 relative
+const LG = [0.99999999999980993, 676.5203681218851, -1259.1392167224028, 771.32342877765313, -176.61502916214059, 12.507343278686905, -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+function lnGamma(z){ if (z < 0.5) return Math.log(Math.PI/Math.sin(Math.PI*z)) - lnGamma(1-z); z -= 1; let x = LG[0]; for (let i=1;i<9;i++) x += LG[i]/(z+i); const t = z + 7.5; return 0.5*Math.log(2*Math.PI) + (z+0.5)*Math.log(t) - t + Math.log(x); }
+const lnFact = n => lnGamma(n+1);
+function bigFromLn10(l10, sig){ sig = sig || 3; if (l10 < 6) return Number(Math.pow(10,l10).toPrecision(sig)).toLocaleString('en-US'); const e = Math.floor(l10), m = Math.pow(10, l10-e); let ms = m.toFixed(sig-1), ee = e; if (parseFloat(ms) >= 10){ ms = (parseFloat(ms)/10).toFixed(sig-1); ee++; } return ms + ' × 10<sup>' + ee.toLocaleString('en-US') + '</sup>'; }
+function sciNum(x, sig){ sig = sig || 2; if (x === 0) return '0'; const e = Math.floor(Math.log10(Math.abs(x))); if (e >= -2 && e < 5) return Number(x.toPrecision(sig)).toLocaleString('en-US'); let m = (Math.abs(x)/Math.pow(10,e)).toFixed(sig-1), ee = e; if (parseFloat(m) >= 10){ m = (parseFloat(m)/10).toFixed(sig-1); ee++; } return (x<0?'−':'') + m + ' × 10<sup>' + (ee<0?'−'+(-ee):ee) + '</sup>'; }
+const kB = 1.380649e-23, h = 6.62607015e-34, NA = 6.02214076e23, amu = 1.66053907e-27;
+
+/* ================= STIRLING ================= */
+let stLN = 1;
+function stRender(){
+  const N = Math.max(1, Math.round(Math.pow(10, stLN)));
+  $('stNOut').textContent = N.toLocaleString('en-US');
+  const lf = lnFact(N), ls = N*Math.log(N) - N + 0.5*Math.log(2*Math.PI*N), l2 = N*Math.log(N) - N;
+  $('stF').innerHTML = bigFromLn10(lf/Math.LN10); $('stS').innerHTML = bigFromLn10(ls/Math.LN10);
+  $('stE1').textContent = ((1 - Math.exp(ls - lf))*100).toPrecision(3) + '%';
+  $('stL').textContent = lf < 1e5 ? lf.toPrecision(5) : Math.round(lf).toLocaleString('en-US'); $('stL2').textContent = l2 < 1e5 ? l2.toPrecision(5) : Math.round(l2).toLocaleString('en-US');
+  $('stE2').textContent = N === 1 ? '∞ (ln 1! = 0)' : ((lf - l2)/lf*100).toPrecision(3) + '%';
+  const c = stCtx; if (!c) return;
+  const W=640, H=300, ax = axes(c, W, H, [64,16,16,40], [0,6], [-7.6,0.6], [0,1,2,3,4,5,6], [-6,-4,-2,0], [['N','i'],['  (log scale)','s']], [['relative error (log scale)','s']], pow10, v => ({'-6':'0.0001%','-4':'0.01%','-2':'1%','0':'100%'})[v]);
+  const e1 = n => 1 - Math.exp(n*Math.log(n) - n + 0.5*Math.log(2*Math.PI*n) - lnFact(n)), e2 = n => (lnFact(n) - (n*Math.log(n) - n))/lnFact(n);
+  [[e1, C.acc],[e2, C.a]].forEach(([f,col]) => { c.strokeStyle=col; c.lineWidth=2.6; c.beginPath(); let st=false;
+    for (let i=0;i<=300;i++){ const lx = 6*i/300, n = Math.pow(10, lx); if (n < 2 && f === e2) continue; const v = f(n); if (!(v > 0)) continue; const y = ax.Y(Math.log10(v)); st ? c.lineTo(ax.X(lx),y) : (c.moveTo(ax.X(lx),y), st=true); } c.stroke(); });
+  c.strokeStyle=C.muted; c.globalAlpha=.4; c.beginPath(); c.moveTo(ax.X(stLN),16); c.lineTo(ax.X(stLN),H-40); c.stroke(); c.globalAlpha=1;
+  // percent labels on the y axis
+}
+$('stN').addEventListener('input', e => { stLN = +e.target.value; stRender(); });
+
+/* ================= SHARP PEAK ================= */
+let pkLN = 2;
+function pkRender(){
+  const N = Math.pow(10, pkLN), q = 100*N, wfrac = 1/Math.sqrt(N);
+  $('pkNOut').innerHTML = N < 1e6 ? Math.round(N).toLocaleString('en-US') : bigFromLn10(pkLN, 2);
+  $('pkW').innerHTML = q < 1e7 ? Math.round(q/Math.sqrt(N)).toLocaleString('en-US') + ' units' : bigFromLn10(Math.log10(q) - pkLN/2, 2) + ' units';
+  $('pkF').innerHTML = wfrac > 0.01 ? (wfrac*100).toPrecision(2) + '%' : sciNum(wfrac, 2);
+  const axisM = 0.01/wfrac, ax_ = axisM < 1000 ? (axisM < 1 ? (axisM*100).toPrecision(2) + ' cm' : axisM.toPrecision(2) + ' m') : (axisM/1000 < 1e5 ? (axisM/1000).toPrecision(2) + ' km' : sciNum(axisM/1000, 2) + ' km');
+  $('pkL').innerHTML = ax_;
+  $('pkEarth').innerHTML = axisM > 4e7 ? 'That axis would wrap around the Earth ' + (axisM/4.0e7 < 1e6 ? Math.round(axisM/4.0e7).toLocaleString('en-US') : sciNum(axisM/4.0e7, 2)) + ' times.' : '';
+  const c = pkCtx; if (!c) return;
+  const W=640, H=320, ax = axes(c, W, H, [44,16,16,40], [0,1], [0,1.08], [0,0.25,0.5,0.75,1], [0,0.5,1], [['q','i'],['A','isub'],[' / ','r'],['q','i']], [['Ω','i'],[' / ','r'],['Ω','i'],['max','sub']]);
+  const gauss = f => Math.exp(-N*Math.pow(2*(f-0.5), 2));
+  // exact, from log-gamma, when N is small enough to resolve
+  if (N <= 1e6){
+    const lnOm = qa => lnGamma(qa+N) - lnGamma(qa+1) - lnGamma(N) + lnGamma(q-qa+N) - lnGamma(q-qa+1) - lnGamma(N);
+    const lmax = lnOm(q/2);
+    const fs = []; for (let i=0;i<=400;i++) fs.push(i/400); for (let i=-200;i<=200;i++) fs.push(0.5 + i/200*4*wfrac);
+    c.strokeStyle=C.vio; c.lineWidth=2.6; c.beginPath();
+    fs.filter(f => f >= 0 && f <= 1).sort((a,b)=>a-b).forEach((f,i) => { const y = ax.Y(Math.exp(lnOm(f*q) - lmax)); i?c.lineTo(ax.X(f),y):c.moveTo(ax.X(f),y); }); c.stroke();
+  }
+  c.strokeStyle=C.acc; c.lineWidth=2; c.setLineDash([6,4]); c.beginPath();
+  // sample densely near the center so very narrow peaks still render
+  const pts = []; for (let i=0;i<=400;i++) pts.push(i/400); for (let i=-200;i<=200;i++) pts.push(0.5 + i/200*4*wfrac);
+  pts.filter(f => f >= 0 && f <= 1).sort((a,b)=>a-b).forEach((f,i) => { const y = ax.Y(gauss(f)); i?c.lineTo(ax.X(f),y):c.moveTo(ax.X(f),y); }); c.stroke(); c.setLineDash([]);
+  if (wfrac*(W-60) < 1){ c.strokeStyle=C.acc; c.lineWidth=1.5; c.beginPath(); c.moveTo(ax.X(0.5), ax.Y(0)); c.lineTo(ax.X(0.5), ax.Y(1)); c.stroke();
+    c.fillStyle=C.muted; c.font='12px '+SANS; c.textAlign='left'; c.fillText('far narrower than a pixel', ax.X(0.5)+8, ax.Y(0.9)); }
+}
+$('pkN').addEventListener('input', e => { pkLN = +e.target.value; pkRender(); });
+
+/* ================= U-V MULTIPLICITY SURFACE (3D) ================= */
+let uvLN = 1;
+const UV = {yaw:-0.62, pitch:0.55, drag:null, n:61};
+// grid coordinates packed toward the center when the peak is narrow: x = 0.5 + 0.5*sinh(a(2t-1))/sinh(a)
+function uvGrid(N){
+  const n = UV.n, width = 1/Math.sqrt(1.5*N), want = width/3, uniform = 1/(n-1);
+  let a = 1e-6;
+  if (want < uniform){ let lo = 1e-6, hi = 30; const target = want/uniform; for (let k=0;k<60;k++){ const m = (lo+hi)/2; (m/Math.sinh(m) > target) ? lo = m : hi = m; } a = (lo+hi)/2; }
+  const g = []; for (let i=0;i<n;i++){ const t = 2*i/(n-1) - 1; g.push(a < 1e-3 ? 0.5 + 0.5*t : 0.5 + 0.5*Math.sinh(a*t)/Math.sinh(a)); }
+  return g;
+}
+function uvProj(x, y, z){ // x = U_A/U, y = V_A/V in [0,1], z = height in [0,1]
+  const X = x - 0.5, Y = y - 0.5, Z = z*0.62;
+  const cy = Math.cos(UV.yaw), sy = Math.sin(UV.yaw), cp = Math.cos(UV.pitch), sp = Math.sin(UV.pitch);
+  const xr = cy*X - sy*Y, yr = sy*X + cy*Y;           // rotate about the vertical
+  const depth = yr*cp - Z*sp, up = yr*sp + Z*cp;       // tilt toward the viewer
+  return {X: 320 + xr*340, Y: 300 - up*340, d: depth};
+}
+function hexToRgb(hx){ const m = /^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec((hx||'').trim()); return m ? [parseInt(m[1],16), parseInt(m[2],16), parseInt(m[3],16)] : [128,128,128]; }
+function uvRender(){
+  const N = Math.pow(10, uvLN);
+  $('uvNOut').textContent = Math.round(N).toLocaleString('en-US');
+  $('uvU').textContent = (1/Math.sqrt(1.5*N)*100).toPrecision(2) + '%'; $('uvV').textContent = (1/Math.sqrt(N)*100).toPrecision(2) + '%';
+  const c = uvCtx; if (!c) return;
+  const W=640, H=470; c.clearRect(0,0,W,H); c.fillStyle=C.surface; c.fillRect(0,0,W,H);
+  const g = uvGrid(N), n = g.length;
+  const z = (u, v) => Math.exp(Math.max(-60, 1.5*N*Math.log(4*u*(1-u)) + N*Math.log(4*v*(1-v))));
+  // heights and projected points
+  const P = []; for (let i=0;i<n;i++){ P.push([]); for (let j=0;j<n;j++){ const zz = (i===0||j===0||i===n-1||j===n-1) ? 0 : z(g[i], g[j]); P[i].push({z:zz, p:uvProj(g[i], g[j], zz)}); } }
+  // base outline and axes
+  const corners = [[0,0],[1,0],[1,1],[0,1]].map(([x,y]) => uvProj(x, y, 0));
+  c.strokeStyle=C.rule; c.lineWidth=1; c.beginPath(); corners.forEach((p,k) => k ? c.lineTo(p.X,p.Y) : c.moveTo(p.X,p.Y)); c.closePath(); c.stroke();
+  // vertical axis for Omega
+  // vertical axis at the leftmost corner on screen, so it stays on the canvas at any rotation
+  const cs = [[0,0],[1,0],[1,1],[0,1]].map(([x,y]) => ({x, y, p: uvProj(x, y, 0)})).sort((a,b) => a.p.X - b.p.X)[0];
+  const o = cs.p, o1 = uvProj(cs.x, cs.y, 1.0); c.strokeStyle=C.muted; c.beginPath(); c.moveTo(o.X,o.Y); c.lineTo(o1.X,o1.Y); c.stroke();
+  // quads, far to near
+  const lo = hexToRgb(C.band), hi = hexToRgb(C.acc), quads = [];
+  for (let i=0;i<n-1;i++) for (let j=0;j<n-1;j++){ const a = P[i][j], b = P[i+1][j], cc = P[i+1][j+1], d = P[i][j+1]; quads.push({pts:[a.p,b.p,cc.p,d.p], z:(a.z+b.z+cc.z+d.z)/4, depth:(a.p.d+b.p.d+cc.p.d+d.p.d)/4}); }
+  quads.sort((A,B) => B.depth - A.depth);
+  quads.forEach(q => { const t = Math.min(1, Math.sqrt(q.z)); const col = lo.map((v,k) => Math.round(v + (hi[k]-v)*t));
+    c.fillStyle = 'rgb(' + col.join(',') + ')';
+    c.beginPath(); q.pts.forEach((p,k) => k ? c.lineTo(p.X,p.Y) : c.moveTo(p.X,p.Y)); c.closePath(); c.fill();
+    // faint mesh lines, skipped on cells too small to show them
+    const e1 = Math.hypot(q.pts[1].X - q.pts[0].X, q.pts[1].Y - q.pts[0].Y), e2 = Math.hypot(q.pts[3].X - q.pts[0].X, q.pts[3].Y - q.pts[0].Y);
+    if (Math.min(e1, e2) > 4){ c.save(); c.globalAlpha = 0.35; c.strokeStyle = C.surface; c.lineWidth = 0.6; c.stroke(); c.restore(); }
+    else { c.strokeStyle = c.fillStyle; c.lineWidth = 0.5; c.stroke(); } });
+  // axis labels along the base edges
+  const lab = (x, y, parts) => { const p = uvProj(x, y, 0); c.fillStyle=C.muted; rich(c, p.X, p.Y + 18, 14, parts, 'center'); };
+  lab(0.5, -0.12, [['U','i'],['A','isub'],[' / ','r'],['U','i'],['total','sub']]);
+  lab(1.14, 0.5, [['V','i'],['A','isub'],[' / ','r'],['V','i'],['total','sub']]);
+  [[0.04,-0.07,'0'],[0.96,-0.07,'1'],[1.07,0.04,'0'],[1.07,0.96,'1']].forEach(([x,y,t]) => { const p = uvProj(x, y, 0); c.fillStyle=C.muted; c.font='12px '+SANS; c.textAlign='center'; c.fillText(t, p.X, p.Y+5); });
+  c.fillStyle=C.muted; rich(c, o1.X + 6, o1.Y - 8, 14, [['Ω','i'],['total','sub'],[' / ','r'],['Ω','i'],['max','sub']], 'left');
+}
+const uvCv = $('uvCanvas');
+uvCv.addEventListener('pointerdown', e => { UV.drag = {x:e.clientX, y:e.clientY, yaw:UV.yaw, pitch:UV.pitch}; uvCv.setPointerCapture(e.pointerId); uvCv.style.cursor='grabbing'; });
+uvCv.addEventListener('pointermove', e => { if (!UV.drag) return; UV.yaw = UV.drag.yaw - (e.clientX-UV.drag.x)*0.01; UV.pitch = Math.max(0.12, Math.min(1.45, UV.drag.pitch + (e.clientY-UV.drag.y)*0.008)); uvRender(); });
+const uvEnd = () => { UV.drag = null; uvCv.style.cursor='grab'; }; uvCv.addEventListener('pointerup', uvEnd); uvCv.addEventListener('pointercancel', uvEnd);
+uvCv.addEventListener('keydown', e => { const k = {ArrowLeft:[0.12,0], ArrowRight:[-0.12,0], ArrowUp:[0,0.08], ArrowDown:[0,-0.08]}[e.key]; if (!k) return; e.preventDefault(); UV.yaw += k[0]; UV.pitch = Math.max(0.12, Math.min(1.45, UV.pitch + k[1])); uvRender(); });
+$('uvN').addEventListener('input', e => { uvLN = +e.target.value; uvRender(); });
+
+/* ================= ALL ON THE LEFT ================= */
+const BX = {N:4, p:[], run:!reduceMotion, counts:null, samples:0, allLeft:0};
+function bxInit(){ BX.p = []; for (let i=0;i<BX.N;i++){ const a = rnd()*2*Math.PI, s = 0.8 + rnd()*0.8; BX.p.push({x:rnd(), y:rnd(), vx:Math.cos(a)*s, vy:Math.sin(a)*s}); } bxClear(); }
+function bxClear(){ BX.counts = new Float64Array(BX.N+1); BX.samples = 0; BX.allLeft = 0; }
+function bxStep(dt){
+  for (const q of BX.p){ q.x += q.vx*dt; q.y += q.vy*dt; if (q.x < 0){ q.x = -q.x; q.vx = -q.vx; } else if (q.x > 1){ q.x = 2-q.x; q.vx = -q.vx; } if (q.y < 0){ q.y = -q.y; q.vy = -q.vy; } else if (q.y > 1){ q.y = 2-q.y; q.vy = -q.vy; } }
+  let nl = 0; for (const q of BX.p) if (q.x < 0.5) nl++;
+  BX.counts[nl]++; BX.samples++; if (nl === BX.N) BX.allLeft++;
+  return nl;
+}
+function bxDraw(){
+  const c = bxCtx; if (!c) return;
+  const W=640, H=260, ox = 20, oy = 14, w = W-40, hh = H-28;
+  c.clearRect(0,0,W,H); c.fillStyle=C.surface; c.fillRect(0,0,W,H);
+  c.fillStyle=C.b; c.globalAlpha=0.07; c.fillRect(ox, oy, w/2, hh); c.globalAlpha=1;
+  c.strokeStyle=C.rule; c.lineWidth=1.5; c.strokeRect(ox, oy, w, hh);
+  c.setLineDash([5,5]); c.strokeStyle=C.muted; c.beginPath(); c.moveTo(ox+w/2, oy); c.lineTo(ox+w/2, oy+hh); c.stroke(); c.setLineDash([]);
+  let nl = 0; BX.p.forEach(q => { const left = q.x < 0.5; if (left) nl++; c.fillStyle = left ? C.b : C.res; c.beginPath(); c.arc(ox + q.x*w, oy + q.y*hh, BX.N > 100 ? 3 : 5, 0, 7); c.fill(); });
+  if (nl === BX.N){ c.fillStyle=C.b; c.font='600 15px '+SANS; c.textAlign='center'; c.fillText('All on the left!', ox + w*0.75, oy + hh/2); }
+}
+function bxHist(){
+  const c = bxHCtx; if (!c) return;
+  const W=640, H=220, N = BX.N;
+  const lnB = k => lnFact(N) - lnFact(k) - lnFact(N-k) - N*Math.LN2;
+  let pmax = 0; for (let k=0;k<=N;k++){ pmax = Math.max(pmax, Math.exp(lnB(k)), BX.samples ? BX.counts[k]/BX.samples : 0); } pmax *= 1.15;
+  const step = N <= 10 ? 1 : N <= 40 ? 5 : N <= 100 ? 10 : 25; const xt = []; for (let v=0; v<=N; v+=step) xt.push(v); if (xt[xt.length-1] !== N) xt.push(N);
+  const ax = axes(c, W, H, [52,16,16,40], [-0.5, N+0.5], [0, pmax], xt, [0, +(pmax/2.3).toPrecision(2), +(pmax/1.15).toPrecision(2)], [['N','i'],['left','sub']], [['probability','s']]);
+  const bw = Math.max(1, (W-68)/(N+1)*0.8);
+  if (BX.samples){ c.fillStyle=C.b; c.globalAlpha=0.6; for (let k=0;k<=N;k++){ const p = BX.counts[k]/BX.samples; if (!p) continue; const y = ax.Y(p); c.fillRect(ax.X(k)-bw/2, y, bw, ax.Y(0)-y); } c.globalAlpha=1; }
+  c.strokeStyle=C.vio; c.lineWidth=2.2; c.beginPath(); for (let k=0;k<=N;k++){ const y = ax.Y(Math.exp(lnB(k))); k?c.lineTo(ax.X(k),y):c.moveTo(ax.X(k),y); } c.stroke();
+}
+function bxInfo(){
+  let nl = 0; BX.p.forEach(q => { if (q.x < 0.5) nl++; });
+  $('bxNOut').textContent = BX.N; $('bxL').textContent = nl + ' of ' + BX.N;
+  const f = BX.samples ? BX.allLeft/BX.samples : 0, p = Math.pow(2, -BX.N);
+  $('bxAll').innerHTML = BX.samples ? (f === 0 ? 'never yet' : (f >= 0.001 ? (f*100).toPrecision(2) + '%' : sciNum(f, 2))) : '–';
+  $('bxP').innerHTML = p >= 0.001 ? (p*100).toPrecision(3) + '%' : sciNum(p, 2);
+  $('bxPlay').textContent = BX.run ? 'Pause' : 'Play';
+  $('bxV').innerHTML = BX.N <= 8 ? 'With so few molecules, “all on the left” happens regularly.' : BX.N <= 20 ? 'Already rare: wait for it.' : BX.N >= 100 ? 'For N = 100, 1/2<sup>100</sup> is below 10<sup>−30</sup>. For 10<sup>23</sup> molecules, it never happens.' : 'Effectively never: the gas fills the box.';
+}
+$('bxN').addEventListener('input', e => { BX.N = +e.target.value; bxInit(); bxDraw(); bxHist(); bxInfo(); });
+$('bxPlay').addEventListener('click', () => { BX.run = !BX.run; bxInfo(); });
+$('bxReset').addEventListener('click', () => { bxClear(); bxHist(); bxInfo(); });
+
+/* ================= SACKUR-TETRODE ================= */
+const GASES = [['He',4.0026],['Ne',20.180],['Ar',39.948],['Kr',83.798],['Xe',131.29]];
+let sgT = 300, sgLP = 0;
+const ST = (M, T, P) => { const N = NA, m = M*amu, V = N*kB*T/P, U = 1.5*N*kB*T; return N*kB*(Math.log(V/N*Math.pow(4*Math.PI*m*U/(3*N*h*h), 1.5)) + 2.5); };
+function sgRender(){
+  const P = 101325*Math.pow(10, sgLP);
+  $('sgTOut').textContent = sgT + ' K'; $('sgPOut').textContent = (P/101325 >= 1 ? (P/101325).toPrecision(3) : (P/101325).toPrecision(2)) + ' atm';
+  const V = NA*kB*sgT/P, U = 1.5*NA*kB*sgT;
+  $('sgV').textContent = V >= 1 ? V.toPrecision(3) + ' m³' : (V*1000).toPrecision(3) + ' L'; $('sgU').textContent = Math.round(U).toLocaleString('en-US') + ' J';
+  $('sgS').textContent = ST(GASES[0][1], sgT, P).toFixed(1) + ' J/K';
+  const c = sgCtx; if (!c) return;
+  const W=640, H=280; c.clearRect(0,0,W,H); c.fillStyle=C.surface; c.fillRect(0,0,W,H);
+  const L = 80, Rr = 80, sc = (W-L-Rr)/250, bh = 30;
+  c.font='12px '+SANS; c.fillStyle=C.muted; c.textAlign='center'; [0,50,100,150,200,250].forEach(v => { c.strokeStyle=C.band; c.beginPath(); c.moveTo(L+v*sc, 16); c.lineTo(L+v*sc, H-36); c.stroke(); c.fillText(v, L+v*sc, H-20); });
+  c.textAlign='right'; c.fillText('molar entropy (J/K)', W-Rr+70, H-4);
+  GASES.forEach(([n,M],i) => { const s = ST(M, sgT, P), y = 26 + i*(bh+16);
+    c.fillStyle = i === 0 ? C.acc : C.res; c.fillRect(L, y, Math.max(0, s*sc), bh);
+    c.fillStyle=C.ink; c.font='600 13px '+SANS; c.textAlign='right'; c.fillText(n, L-10, y+bh/2+5);
+    c.textAlign='left'; c.font='13px '+SANS; c.fillText(s.toFixed(1), L + Math.max(0, s*sc) + 6, y+bh/2+5); });
+}
+$('sgT').addEventListener('input', e => { sgT = +e.target.value; sgRender(); });
+$('sgP').addEventListener('input', e => { sgLP = +e.target.value; sgRender(); });
+
+/* ================= MIXING / GIBBS ================= */
+const MX = {mode:'free', open:false, p:[], n:60};
+function mxInit(){
+  MX.p = []; MX.open = false;
+  const add = (side, kind) => { for (let i=0;i<MX.n;i++){ const a = rnd()*2*Math.PI, s = 0.18 + rnd()*0.18; MX.p.push({x: side === 'L' ? rnd()*0.49 : 0.51 + rnd()*0.49, y: rnd(), vx: Math.cos(a)*s, vy: Math.sin(a)*s, k: kind}); } };
+  if (MX.mode === 'free') add('L', 0); else if (MX.mode === 'diff'){ add('L', 0); add('R', 1); } else { add('L', 0); add('R', 0); }
+}
+function mxStep(dt){
+  for (const q of MX.p){ q.x += q.vx*dt; q.y += q.vy*dt;
+    if (q.y < 0){ q.y = -q.y; q.vy = -q.vy; } else if (q.y > 1){ q.y = 2-q.y; q.vy = -q.vy; }
+    if (q.x < 0){ q.x = -q.x; q.vx = -q.vx; } else if (q.x > 1){ q.x = 2-q.x; q.vx = -q.vx; }
+    if (!MX.open){ if (q.x > 0.5 && q.x - q.vx*dt <= 0.5){ q.x = 1 - q.x; q.vx = -q.vx; } else if (q.x < 0.5 && q.x - q.vx*dt >= 0.5){ q.x = 1 - q.x; q.vx = -q.vx; } }
+  }
+}
+function mxDraw(){
+  const c = mxCtx; if (!c) return;
+  const W=640, H=280, ox = 20, oy = 16, w = W-40, hh = H-32;
+  c.clearRect(0,0,W,H); c.fillStyle=C.surface; c.fillRect(0,0,W,H);
+  c.strokeStyle=C.ink; c.lineWidth=2; c.strokeRect(ox, oy, w, hh);
+  if (!MX.open){ c.fillStyle=C.ink; c.fillRect(ox + w/2 - 2, oy, 4, hh); }
+  else { c.setLineDash([4,6]); c.strokeStyle=C.res; c.lineWidth=1; c.beginPath(); c.moveTo(ox+w/2, oy); c.lineTo(ox+w/2, oy+hh); c.stroke(); c.setLineDash([]); }
+  if (MX.mode === 'free' && !MX.open){ c.fillStyle=C.muted; c.font='14px '+SANS; c.textAlign='center'; c.fillText('vacuum', ox + w*0.75, oy + hh/2); }
+  MX.p.forEach(q => { const x = ox + q.x*w, y = oy + q.y*hh; if (q.k === 0){ c.fillStyle=C.b; c.beginPath(); c.arc(x, y, 4.5, 0, 7); c.fill(); } else { c.fillStyle=C.a; c.beginPath(); c.moveTo(x, y-5.5); c.lineTo(x+5, y+4); c.lineTo(x-5, y+4); c.closePath(); c.fill(); } });
+}
+function mxInfo(){
+  document.querySelectorAll('[data-mix]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.mix === MX.mode)));
+  $('mixToggle').textContent = !MX.open ? 'Remove the partition' : MX.mode === 'same' ? 'Put the partition back' : 'Start over';
+  const ln2 = Math.log(2).toFixed(3);
+  let s1 = '0', s2 = '0', v = '';
+  if (MX.open){
+    if (MX.mode === 'free'){ s1 = s2 = 'ln 2 = ' + ln2; v = 'Free expansion doubles the volume: ΔS = Nk<sub>B</sub> ln 2, with no heat and no work. Irreversible: the gas never collects back on one side.'; }
+    else if (MX.mode === 'diff'){ s1 = s2 = '2 ln 2 = ' + (2*Math.log(2)).toFixed(3); v = 'Each gas expands into the whole chamber: the entropy of mixing, ΔS = 2Nk<sub>B</sub> ln 2.'; }
+    else { s1 = '0'; s2 = '2 ln 2 = ' + (2*Math.log(2)).toFixed(3); v = 'Nothing really mixes: the two halves were already the same gas, and with the 1/N! the entropy doesn’t change. Without it, the formula would wrongly claim 2Nk<sub>B</sub> ln 2, and putting the partition back would then lower the entropy.'; }
+  } else {
+    v = MX.mode === 'free' ? 'The gas is confined to the left half; the right half is empty.' : MX.mode === 'diff' ? 'Two different gases, N molecules each, separated by a partition.' : 'The same gas on both sides, N molecules each.';
+  }
+  $('mixS1').textContent = s1; $('mixS2').textContent = s2; $('mixV').innerHTML = v;
+}
+document.querySelectorAll('[data-mix]').forEach(b => b.addEventListener('click', () => { MX.mode = b.dataset.mix; mxInit(); mxDraw(); mxInfo(); }));
+$('mixToggle').addEventListener('click', () => {
+  if (!MX.open){ MX.open = true; }
+  else { MX.open = false; if (MX.mode !== 'same'){ mxInit(); } }
+  mxDraw(); mxInfo();
+});
+
+/* ================= LAYOUT + LOOP ================= */
+let stCtx, pkCtx, uvCtx, bxCtx, bxHCtx, sgCtx, mxCtx;
+function layout(){
+  stCtx = fit($('stCanvas'), 640, 300); pkCtx = fit($('pkCanvas'), 640, 320); uvCtx = fit($('uvCanvas'), 640, 470);
+  bxCtx = fit($('boxCanvas'), 640, 260); bxHCtx = fit($('leftHist'), 640, 220);
+  sgCtx = fit($('stCanvas2'), 640, 280); mxCtx = fit($('mixCanvas'), 640, 280);
+  redrawAll();
+}
+function redrawAll(){ stRender(); pkRender(); uvRender(); bxDraw(); bxHist(); bxInfo(); sgRender(); mxDraw(); mxInfo(); }
+let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(layout, 80); });
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); redrawAll(); });
+const vis = {bx:true, mx:true};
+const io = new IntersectionObserver(es => es.forEach(e => { vis[e.target.dataset.key] = e.isIntersecting; }));
+[['boxCanvas','bx'],['leftHist','bx'],['mixCanvas','mx']].forEach(([id,k]) => { $(id).dataset.key = k; io.observe($(id)); });
+let last = performance.now(), infoT = 0;
+function loop(now){
+  const dt = Math.min(0.05, (now-last)/1000); last = now; infoT += dt;
+  if (BX.run && vis.bx && bxCtx){ for (let k=0;k<20;k++) bxStep(dt/20*1.5); bxDraw(); }
+  if (vis.mx && mxCtx && !reduceMotion){ mxStep(dt); mxDraw(); }
+  if (infoT > 0.25){ infoT = 0; if (vis.bx){ bxHist(); bxInfo(); } }
+  requestAnimationFrame(loop);
+}
+bxInit(); mxInit();
+layout();
+requestAnimationFrame(loop);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(redrawAll);
+})();
+</script>
+</body>
+</html>
