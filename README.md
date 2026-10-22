@@ -1,18 +1,28 @@
 # Large Systems and Entropy, Interactively
 
-An interactive, single-page web demo of the statistics of very large systems: very large numbers and Stirling's approximation, the extreme sharpness of multiplicity peaks, the multiplicity of an ideal gas, and entropy, from S = k<sub>B</sub> ln Ω to the Sackur–Tetrode equation, the entropy of mixing, and the Gibbs paradox.
+An interactive, single-page web demo of the statistics of very large systems: very large numbers and Stirling's approximation, the extreme sharpness of multiplicity peaks, the multiplicity of an ideal gas, and entropy, from $`S = k_B\ln\Omega`$ to the Sackur–Tetrode equation, the entropy of mixing, and the Gibbs paradox.
 
 Created by **Claude Opus 5.5**, based on the lecture notes by **Sang Hoon Lee** (Statistical Physics 1, Chapter 2, The Second Law, Sections 2.4 to 2.6). It follows the demo for Sections 2.1 to 2.3 (microstates and macrostates).
 
 ## What's inside
 
-**Very large numbers.** Small, large, and very large numbers, why 10<sup>23</sup> + 23 ≈ 10<sup>23</sup> and 10<sup>10<sup>23</sup></sup> × 10<sup>23</sup> ≈ 10<sup>10<sup>23</sup></sup>, and the logarithm as the tool for handling them. Stirling's approximation, N! ≈ N<sup>N</sup>e<sup>−N</sup>√(2πN) and ln N! ≈ N ln N − N, with a chart of their errors from N = 1 to 10<sup>6</sup> that reproduces the lecture's table (0.83% and 13.8% at N = 10; 0.083% and 0.89% at N = 100).
+**Very large numbers.** Small, large, and very large numbers, why $`10^{23} + 23 \approx 10^{23}`$ and $`10^{10^{23}} \times 10^{23} \approx 10^{10^{23}}`$, and the logarithm as the tool for handling them. Stirling's approximation, $`N! \approx N^N e^{-N}\sqrt{2\pi N}`$ and $`\ln N! \approx N\ln N - N`$, with a chart of their errors from $`N = 1`$ to $`10^6`$ that reproduces the lecture's table (0.83% and 13.8% at $`N = 10`$; 0.083% and 0.89% at $`N = 100`$).
 
-**How sharp is the peak?** The large Einstein solid, Ω ≈ (eq/N)<sup>N</sup>, and two such solids sharing energy, whose multiplicity is the Gaussian Ω<sub>max</sub> e<sup>−N(2x/q)²</sup>. A slider takes N from 1 to 10<sup>24</sup>, drawing the exact multiplicity (up to 10<sup>6</sup>) and the Gaussian against the full axis, with the peak's width as a fraction of the axis. For N = 10<sup>20</sup>, drawing the peak 1 cm wide needs an axis of 10<sup>5</sup> km, about three times around the Earth.
+**How sharp is the peak?** The large Einstein solid, $`\Omega \approx (eq/N)^N`$, and two such solids sharing energy, whose multiplicity is the Gaussian $`\Omega_{\max}\, e^{-N(2x/q)^2}`$. A slider takes $`N`$ from 1 to $`10^{24}`$, drawing the exact multiplicity (up to $`10^6`$) and the Gaussian against the full axis, with the peak's width as a fraction of the axis. For $`N = 10^{20}`$, drawing the peak 1 cm wide needs an axis of $`10^5`$ km, about three times around the Earth.
 
-**The ideal gas.** Counting states in position and momentum space, the uncertainty principle, hyperspheres, and the 1/N! for indistinguishable molecules, leading to Ω = f(N)V<sup>N</sup>U<sup>3N/2</sup>. A rotatable 3D surface of the total multiplicity of two gases over every division of energy and volume shows the peak narrowing into a spike as N grows. A simulation of molecules in a box counts how often they are all in the left half, compared with the prediction 1/2<sup>N</sup> and the binomial distribution.
+**The ideal gas.** Counting states in position and momentum space, the uncertainty principle, hyperspheres, and the $`1/N!`$ for indistinguishable molecules, leading to $`\Omega = f(N)\,V^N U^{3N/2}`$. A rotatable 3D surface of the total multiplicity of two gases over every division of energy and volume shows the peak narrowing into a spike as $`N`$ grows. A simulation of molecules in a box counts how often they are all in the left half, compared with the prediction $`1/2^N`$ and the binomial distribution.
 
-**Entropy.** S = k<sub>B</sub> ln Ω, its additivity, the second law as "entropy tends to increase," and Maxwell's demon. The Sackur–Tetrode equation for the molar entropy of the noble gases at any temperature and pressure (126 J/K for a mole of helium at room temperature and atmospheric pressure). An experiment with a removable partition compares free expansion (ΔS = Nk<sub>B</sub> ln 2 with no heat or work), mixing two different gases (ΔS = 2Nk<sub>B</sub> ln 2), and "mixing" the same gas (ΔS = 0 only with the 1/N!), resolving the Gibbs paradox; plus reversible and irreversible processes.
+**Entropy.** $`S = k_B\ln\Omega`$, its additivity, the second law as "entropy tends to increase," and Maxwell's demon. The Sackur–Tetrode equation for the molar entropy of the noble gases at any temperature and pressure (126 J/K for a mole of helium at room temperature and atmospheric pressure). An experiment with a removable partition compares free expansion ($`\Delta S = Nk_B\ln 2`$ with no heat or work), mixing two different gases ($`\Delta S = 2Nk_B\ln 2`$), and "mixing" the same gas ($`\Delta S = 0`$ only with the $`1/N!`$), resolving the Gibbs paradox; plus reversible and irreversible processes.
+
+## See also
+
+**[Labels, Arrangements, and the Gibbs Paradox](https://lshlj82.github.io/Gibbs-paradox-by-ProfRo/)** ([source](https://github.com/lshlj82/Gibbs-paradox-by-ProfRo)) is a supplementary page on the Gibbs paradox, based on lecture notes by Prof. Sunghan Ro (Harvard University). This demo resolves the paradox with the indistinguishability of molecules and the $`1/N!`$. The supplement gives a classical resolution that also applies to distinguishable particles such as colloids:
+
+- it keeps every labeled microstate;
+- it splits the entropy into a labeling part, $`k_B\ln N!`$, and an arrangement part that carries the $`1/N!`$;
+- it shows that the $`2Nk_B\ln 2`$ of "mixing" the same gas is lost information about which particle is on which side.
+
+The page is in English only.
 
 ## Running it
 
@@ -37,7 +47,7 @@ python3 -m http.server 8000
 - Plain HTML, CSS, and vanilla JavaScript drawn on `<canvas>`. No frameworks, no build step.
 - The 3D surface is drawn with a lightweight hand-written projection (no 3D library); its grid packs more points near the peak as N grows, so even a very narrow spike is resolved.
 - Factorials and multiplicities are computed through the logarithm of the gamma function (Lanczos approximation, accurate to about 13 digits), so the exact multiplicity can be drawn for systems of up to a million oscillators.
-- The "all on the left" simulation uses noninteracting molecules bouncing in a box; the fraction of time they are all on the left converges to 1/2<sup>N</sup>.
+- The "all on the left" simulation uses noninteracting molecules bouncing in a box; the fraction of time they are all on the left converges to $`1/2^N`$.
 - The Sackur–Tetrode values use the atomic masses of He, Ne, Ar, Kr, and Xe with V = nRT/P and U = (3/2)nRT; argon's 154.9 J/K at 300 K matches its measured standard entropy closely.
 - The animations pause when scrolled off screen and are reduced when the system asks for reduced motion.
 - Long equations wrap on narrow screens.
@@ -48,7 +58,7 @@ python3 -m http.server 8000
 
 ## Caveats
 
-- The 3D multiplicity surface of two gases plots the factor (V<sub>A</sub>V<sub>B</sub>)<sup>N</sup>(U<sub>A</sub>U<sub>B</sub>)<sup>3N/2</sup> relative to its maximum; the prefactor f(N) cancels.
+- The 3D multiplicity surface of two gases plots the factor $`(V_AV_B)^N (U_AU_B)^{3N/2}`$ relative to its maximum; the prefactor $`f(N)`$ cancels.
 - The partition experiment illustrates the entropy changes with simple moving dots; the ΔS values come from the formulas, not from the animation.
 
 ## Credits
