@@ -16,13 +16,13 @@ Created by **Claude Opus 5.5**, based on the lecture notes by **Sang Hoon Lee** 
 
 ## See also
 
-**[Labels, Arrangements, and the Gibbs Paradox](https://lshlj82.github.io/Gibbs-paradox-by-ProfRo/)** ([source](https://github.com/lshlj82/Gibbs-paradox-by-ProfRo)) is a supplementary page on the Gibbs paradox, based on lecture notes by Prof. Sunghan Ro (Harvard University). This demo resolves the paradox with the indistinguishability of molecules and the $`1/N!`$. The supplement gives a classical resolution that also applies to distinguishable particles such as colloids:
+**[Labels, Arrangements, and the Gibbs Paradox](https://lshlj82.github.io/Gibbs-paradox-by-ProfRo/)** ([한국어](https://lshlj82.github.io/Gibbs-paradox-by-ProfRo/ko.html), [source](https://github.com/lshlj82/Gibbs-paradox-by-ProfRo)) is a supplementary page on the Gibbs paradox, based on lecture notes by Prof. Sunghan Ro (Harvard University). This demo resolves the paradox with the indistinguishability of molecules and the $`1/N!`$. The supplement gives a classical resolution that also applies to distinguishable particles such as colloids:
 
 - it keeps every labeled microstate;
 - it splits the entropy into a labeling part, $`k_B\ln N!`$, and an arrangement part that carries the $`1/N!`$;
 - it shows that the $`2Nk_B\ln 2`$ of "mixing" the same gas is lost information about which particle is on which side.
 
-The page is in English only.
+The page is available in English and Korean.
 
 ## Running it
 
