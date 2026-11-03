@@ -31,7 +31,7 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *,*::before,*::after{box-sizing:inherit}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);font-size:1.1rem;line-height:1.62;-webkit-font-smoothing:antialiased}
 img,canvas{max-width:100%}
-a{color:var(--acc)}
+a{color:var(--acc);color:color-mix(in srgb,var(--acc) 82%,var(--ink))}
 :focus-visible{outline:2px solid var(--acc);outline-offset:3px;border-radius:2px}
 .wrap{max-width:1080px;margin:0 auto;padding:0 clamp(1rem,4vw,2.5rem)}
 .prose{max-width:40rem}
@@ -156,7 +156,7 @@ button.theme-btn svg{width:20px; height:20px; fill:none; stroke:currentColor; st
     <div class="panel">
       <div class="ctl">
         <label for="stN"><span class="lt">\(N\)</span> <output id="stNOut"></output></label>
-        <input type="range" id="stN" min="0" max="6" step="0.01" value="1">
+        <input type="range" id="stN" aria-label="N, the number in N factorial (log scale)" min="0" max="6" step="0.01" value="1">
       </div>
       <dl class="stats">
         <dt>\(N!\)</dt><dd id="stF">–</dd>
@@ -426,7 +426,8 @@ $('stN').addEventListener('input', e => { stLN = +e.target.value; stRender(); })
 /* ================= SHARP PEAK ================= */
 let pkLN = 2;
 function pkRender(){
-  const N = Math.pow(10, pkLN), q = 100*N, wfrac = 1/Math.sqrt(N);
+  // below 10^6 the exact curve is for a whole number of oscillators N (and so a whole number of units q)
+  const N0 = Math.pow(10, pkLN), N = N0 < 1e6 ? Math.max(1, Math.round(N0)) : N0, q = 100*N, wfrac = 1/Math.sqrt(N);
   $('pkNOut').innerHTML = N < 1e6 ? Math.round(N).toLocaleString('en-US') : bigFromLn10(pkLN, 2);
   $('pkW').innerHTML = q < 1e7 ? Math.round(q/Math.sqrt(N)).toLocaleString('en-US') + ' units' : bigFromLn10(Math.log10(q) - pkLN/2, 2) + ' units';
   $('pkF').innerHTML = wfrac > 0.01 ? (wfrac*100).toPrecision(2) + '%' : sciNum(wfrac, 2);
@@ -638,8 +639,9 @@ function redrawAll(){ stRender(); pkRender(); uvRender(); bxDraw(); bxHist(); bx
 let rt; window.addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(layout, 80); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readColors(); redrawAll(); });
 new MutationObserver(() => { readColors(); redrawAll(); }).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
-const vis = {bx:true, mx:true};
-const io = new IntersectionObserver(es => es.forEach(e => { vis[e.target.dataset.key] = e.isIntersecting; }));
+const vis = {bx:true, mx:true}, visOn = {bx:new Set(), mx:new Set()};
+// an experiment keeps running while any one of its canvases is on screen
+const io = new IntersectionObserver(es => es.forEach(e => { const k = e.target.dataset.key; visOn[k][e.isIntersecting ? 'add' : 'delete'](e.target); vis[k] = visOn[k].size > 0; }));
 [['boxCanvas','bx'],['leftHist','bx'],['mixCanvas','mx']].forEach(([id,k]) => { $(id).dataset.key = k; io.observe($(id)); });
 let last = performance.now(), infoT = 0;
 function loop(now){
